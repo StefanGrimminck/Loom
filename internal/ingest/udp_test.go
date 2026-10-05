@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/StefanGrimminck/Loom/internal/ratelimit"
+	"github.com/honeylabshq/Loom/internal/ratelimit"
 )
 
 func udpEvents() []map[string]interface{} {

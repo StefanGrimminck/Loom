@@ -3,7 +3,7 @@ package enrich
 import (
 	"testing"
 
-	"github.com/StefanGrimminck/Loom/internal/classify"
+	"github.com/honeylabshq/Loom/internal/classify"
 	"github.com/rs/zerolog"
 )
 

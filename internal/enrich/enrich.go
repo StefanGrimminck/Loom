@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/StefanGrimminck/Loom/internal/classify"
+	"github.com/honeylabshq/Loom/internal/classify"
 	"github.com/oschwald/geoip2-golang"
 	"github.com/rs/zerolog"
 )

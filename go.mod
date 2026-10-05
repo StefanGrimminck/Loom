@@ -1,4 +1,4 @@
-module github.com/StefanGrimminck/Loom
+module github.com/honeylabshq/Loom
 
 go 1.27.0
 

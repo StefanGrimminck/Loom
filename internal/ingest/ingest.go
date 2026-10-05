@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/StefanGrimminck/Loom/internal/auth"
-	"github.com/StefanGrimminck/Loom/internal/ratelimit"
+	"github.com/honeylabshq/Loom/internal/auth"
+	"github.com/honeylabshq/Loom/internal/ratelimit"
 	"github.com/rs/zerolog"
 )
 

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/StefanGrimminck/Loom/internal/ingest"
+	"github.com/honeylabshq/Loom/internal/ingest"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog"
