@@ -16,6 +16,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o loom ./cmd/loom
 
 # Runtime stage: minimal image, non-root user
 FROM alpine:3.19
+LABEL org.opencontainers.image.licenses="BUSL-1.1" \
+      org.opencontainers.image.vendor="HoneyLabs" \
+      org.opencontainers.image.title="Loom"
 RUN apk add --no-cache ca-certificates tzdata && \
     adduser -D -u 1000 -g loom loom
 USER loom

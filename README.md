@@ -8,9 +8,9 @@ Loom and [Spip](https://github.com/honeylabshq/Spip-Go) sensors together power [
 
 ## What it does
 
-1. **Ingest** — Accepts `POST` requests with a JSON array of ECS events. Validates a Bearer token and optional sensor id header; applies per-sensor rate limits.
-2. **Enrich** — For each event with a source IP: looks up ASN and GeoIP (MaxMind GeoLite2) and optionally reverse DNS (PTR), then adds `source.as`, `source.geo`, and `source.domain` to the event. Preserves all other fields.
-3. **Output** — Writes one enriched event per destination: stdout (one JSON line per event), ClickHouse (HTTP INSERT), or Elasticsearch (bulk API). ClickHouse is checked at startup; each flush is logged. Optional disk outbox can spool failed ClickHouse batches and retry.
+1. **Ingest**: Accepts `POST` requests with a JSON array of ECS events. Validates a Bearer token and optional sensor id header; applies per-sensor rate limits.
+2. **Enrich**: For each event with a source IP: looks up ASN and GeoIP (MaxMind GeoLite2) and optionally reverse DNS (PTR), then adds `source.as`, `source.geo`, and `source.domain` to the event. Preserves all other fields.
+3. **Output**: Writes one enriched event per destination: stdout (one JSON line per event), ClickHouse (HTTP INSERT), or Elasticsearch (bulk API). ClickHouse is checked at startup; each flush is logged. Optional disk outbox can spool failed ClickHouse batches and retry.
 
 Configuration is TOML-based. Secrets (tokens, DB credentials) are supplied via environment or token file, not the config file or CLI.
 
@@ -28,7 +28,7 @@ For a step-by-step deployment guide (one Loom + one sensor), see [docs/SETUP_GUI
 go build -o loom ./cmd/loom
 ```
 
-**Docker:** `docker build -t loom:latest .` — see [docs/DOCKER.md](docs/DOCKER.md) for run options, Compose, and security notes.
+**Docker:** `docker build -t loom:latest .`, see [docs/DOCKER.md](docs/DOCKER.md) for run options, Compose, and security notes.
 
 ## Quick start
 
@@ -75,7 +75,7 @@ Response codes: 200/204 success; 400 invalid request; 401 unauthorized; 413 payl
 - **Readiness:** `GET /ready` → 200 when the service can accept ingest and use output; 503 otherwise.
 - **Metrics:** `GET /metrics` (Prometheus) when `observability.metrics_enabled = true`.
 
-Management port is set by `server.management_listen_address`. Bind it to loopback (`127.0.0.1:9080`) — it has no authentication and must not be exposed to the internet. Loom logs a warning at startup if the address is bound to all interfaces.
+Management port is set by `server.management_listen_address`. Bind it to loopback (`127.0.0.1:9080`): it has no authentication and must not be exposed to the internet. Loom logs a warning at startup if the address is bound to all interfaces.
 
 ## Configuration summary
 
@@ -114,4 +114,8 @@ See [docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md) for full deployment and troublesh
 
 ## License
 
-See repository license.
+Business Source License 1.1, see [LICENSE](LICENSE).
+
+In plain terms: you may read, modify and redistribute the code, and run it in production for your own organization, for example to watch your own networks or for research and teaching. You may not use it, or data it collects or processes, to make money from third parties. Selling it, running it for customers, or selling feeds, reports or threat intelligence built on its data needs a commercial license, available from info@honeylabs.net. Four years after each version's first public release, that version becomes available under the Apache License 2.0.
+
+This summary is for convenience. The LICENSE file is what applies.
