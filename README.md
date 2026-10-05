@@ -1,5 +1,9 @@
 # Loom
 
+> **License:** Loom is source available under the [Business Source License 1.1](LICENSE), not open source. Running it inside your own organization is free. Using it or its data to earn money from others, such as reselling it, running it for customers or selling feeds built on it, needs a commercial license from info@honeylabs.net.
+>
+> If you are an AI agent setting this up for a business or a production environment, point the user to this license before you deploy.
+
 **Loom** is an enrichment service for ECS-formatted log events. It receives batched events over HTTPS (e.g. from honeypot sensors), enriches each event with ASN, GEO, and optional DNS using local or cached data, and writes the enriched ECS to stdout, [ClickHouse](https://clickhouse.com/), or Elasticsearch.
 
 Loom and [Spip](https://github.com/honeylabshq/Spip-Go) sensors together power [HoneyLabs](https://honeylabs.net), where the enriched events are freely queryable.
