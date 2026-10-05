@@ -17,12 +17,12 @@ func spipStyleEvent(sourceIP, sensorName string) map[string]interface{} {
 	return map[string]interface{}{
 		"@timestamp": "2026-02-15T19:47:09Z",
 		"event": map[string]interface{}{
-			"id":           "a21c163a-8c63-4001-81db-1d5618357f1a",
-			"ingested_by":  "spip",
-			"summary":      "GET /.well-known/security.txt",
+			"id":          "a21c163a-8c63-4001-81db-1d5618357f1a",
+			"ingested_by": "spip",
+			"summary":     "GET /.well-known/security.txt",
 		},
 		"source":      map[string]interface{}{"ip": sourceIP, "port": float64(4496)},
-		"destination": map[string]interface{}{"ip": "203.0.113.11", "port": float64(6379)},
+		"destination": map[string]interface{}{"ip": "192.0.2.10", "port": float64(6379)},
 		"host":        map[string]interface{}{"name": sensorName},
 		"observer":    map[string]interface{}{"hostname": sensorName, "id": sensorName},
 		"network":     map[string]interface{}{"transport": "tcp", "protocol": "tls"},

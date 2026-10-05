@@ -170,6 +170,7 @@ func main() {
 	ingestHandler := &ingest.Handler{
 		Validator:     validator,
 		RateLimiter:   rateLimiter,
+		EventLimiter:  ratelimit.NewEventLimiter(cfg.Limits.PerSensorEventsRPS, cfg.Limits.MaxEventsPerBatch),
 		MaxBodyBytes:  cfg.Limits.MaxBodySizeBytes,
 		MaxEvents:     cfg.Limits.MaxEventsPerBatch,
 		MaxEventBytes: cfg.Limits.MaxEventSizeBytes,
@@ -187,17 +188,18 @@ func main() {
 	}
 
 	srv := &server.Server{
-		IngestHandler:  ingestHandler,
-		EnricherReady:  enricher.Ready,
-		OutputReady:    func() bool { return true },
-		MetricsHandler: metricsHandler,
-		Logger:         log,
-		CertFile:       cfg.Server.CertFile,
-		KeyFile:        cfg.Server.KeyFile,
-		ListenAddr:     cfg.Server.ListenAddress,
-		ManagementAddr: cfg.Server.ManagementListenAddress,
-		IPRateLimit:    cfg.Limits.GlobalIPRPS,
-		MaxConnections: cfg.Server.MaxConnections,
+		IngestHandler:     ingestHandler,
+		EnricherReady:     enricher.Ready,
+		OutputReady:       func() bool { return true },
+		MetricsHandler:    metricsHandler,
+		Logger:            log,
+		CertFile:          cfg.Server.CertFile,
+		KeyFile:           cfg.Server.KeyFile,
+		ListenAddr:        cfg.Server.ListenAddress,
+		ManagementAddr:    cfg.Server.ManagementListenAddress,
+		IPRateLimit:       cfg.Limits.GlobalIPRPS,
+		TrustProxyHeaders: cfg.Server.TrustProxyHeaders,
+		MaxConnections:    cfg.Server.MaxConnections,
 	}
 
 	go func() {

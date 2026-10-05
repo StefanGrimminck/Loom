@@ -3,6 +3,7 @@ package ingest
 import (
 	"encoding/json"
 	"io"
+	"mime"
 	"net/http"
 	"strings"
 
@@ -15,6 +16,7 @@ import (
 type Handler struct {
 	Validator     *auth.Validator
 	RateLimiter   *ratelimit.PerSensorLimiter
+	EventLimiter  *ratelimit.EventLimiter
 	MaxBodyBytes  int64
 	MaxEvents     int
 	MaxEventBytes int64
@@ -31,7 +33,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"error":"method_not_allowed"}`))
 		return
 	}
-	if r.Header.Get("Content-Type") != "application/json" {
+	if mt, _, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil || mt != "application/json" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 		_, _ = w.Write([]byte(`{"error":"invalid_content_type"}`))
@@ -148,6 +150,16 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			_, _ = w.Write([]byte(`{"error":"event_too_large"}`))
 			return
 		}
+	}
+
+	if !h.EventLimiter.AllowN(headerSensorID, len(events)) {
+		h.Log.Warn().Str("sensor_id", headerSensorID).Int("events", len(events)).Msg("event rate limit exceeded (429)")
+		if h.Metrics != nil {
+			h.Metrics.IncRequests(headerSensorID, http.StatusTooManyRequests)
+		}
+		w.Header().Set("Retry-After", "1")
+		h.respondErr(w, http.StatusTooManyRequests, "event_rate_limit_exceeded")
+		return
 	}
 
 	if h.Metrics != nil {

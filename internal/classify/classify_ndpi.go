@@ -24,44 +24,42 @@ static int shim_init() {
     return 0;
 }
 
-// Synthesize a minimal IPv4+TCP L3 frame around the captured payload and run
-// nDPI over it. We only ever have the attacker's first payload (one packet),
-// so we process that single packet and immediately give up (with guessing) to
-// let nDPI's port/first-bytes heuristics resolve protocols that would normally
-// need more packets. Writes the resolved protocol name into out.
-static void shim_classify(const unsigned char *payload, int plen,
+// Synthesize a minimal IPv4 frame (TCP or UDP) around the captured payload
+// and run nDPI over it. Only the first payload exists, so the single packet is
+// processed and detection is finalised without port guessing.
+static void shim_classify(const unsigned char *payload, int plen, int udp,
                           unsigned short sport, unsigned short dport,
                           char *out, int out_sz) {
     out[0] = 0;
     if (g_mod == NULL || plen <= 0) return;
 
-    int l3len = 40 + plen; // 20 IPv4 + 20 TCP + payload
-    unsigned char *pkt = (unsigned char *)malloc(l3len);
+    int l4len = udp ? 8 : 20;
+    int l3len = 20 + l4len + plen;
+    unsigned char *pkt = (unsigned char *)calloc(1, l3len);
     if (!pkt) return;
-    memset(pkt, 0, 40);
 
-    // IPv4 header (checksums are ignored by nDPI, left zero).
     pkt[0] = 0x45;                      // version 4, IHL 5
     pkt[2] = (unsigned char)((l3len >> 8) & 0xff);
     pkt[3] = (unsigned char)(l3len & 0xff);
     pkt[8] = 64;                        // TTL
-    pkt[9] = 6;                         // protocol = TCP
-    // Unique source IP per call. nDPI keeps an LRU flow cache keyed on the
-    // tuple; reusing the same fake IPs made it correlate unrelated events and
-    // return a cached label instead of inspecting the payload (e.g. an SMB
-    // packet coming back as "bittorrent"). A per-call counter in 100.x.x.x
-    // (carrier-grade NAT, no special addresses) guarantees an independent flow.
-    static unsigned int g_ctr = 0; // mutex-guarded by the Go caller
+    pkt[9] = udp ? 17 : 6;
+    // A unique source per call keeps nDPI's flow cache from carrying one
+    // event's label onto the next.
+    static unsigned int g_ctr = 0;      // guarded by the Go-side mutex
     unsigned int c = g_ctr++;
     pkt[12] = 100; pkt[13] = (c >> 16) & 0xff; pkt[14] = (c >> 8) & 0xff; pkt[15] = c & 0xff;
-    pkt[16] = 100; pkt[17] = 200; pkt[18] = 200; pkt[19] = 200; // fixed dst
+    pkt[16] = 100; pkt[17] = 200; pkt[18] = 200; pkt[19] = 200;
 
-    // TCP header at offset 20.
     pkt[20] = (unsigned char)((sport >> 8) & 0xff); pkt[21] = (unsigned char)(sport & 0xff);
     pkt[22] = (unsigned char)((dport >> 8) & 0xff); pkt[23] = (unsigned char)(dport & 0xff);
-    pkt[32] = 0x50;                     // data offset 5 (20 bytes)
-    pkt[33] = 0x18;                     // flags PSH+ACK
-    memcpy(pkt + 40, payload, plen);
+    if (udp) {
+        int ulen = 8 + plen;
+        pkt[24] = (unsigned char)((ulen >> 8) & 0xff); pkt[25] = (unsigned char)(ulen & 0xff);
+    } else {
+        pkt[32] = 0x50;                 // data offset 5
+        pkt[33] = 0x18;                 // PSH+ACK
+    }
+    memcpy(pkt + 20 + l4len, payload, plen);
 
     struct ndpi_flow_struct *flow =
         (struct ndpi_flow_struct *)ndpi_flow_malloc(SIZEOF_FLOW_STRUCT);
@@ -128,14 +126,21 @@ func New() (Classifier, error) {
 	return &ndpiClassifier{}, nil
 }
 
-func (c *ndpiClassifier) Classify(payload []byte, srcPort, dstPort uint16) string {
+func (c *ndpiClassifier) Classify(payload []byte, transport Transport, srcPort, dstPort uint16) string {
 	if len(payload) == 0 {
 		return ""
+	}
+	if len(payload) > MaxPayload {
+		payload = payload[:MaxPayload]
+	}
+	udp := C.int(0)
+	if transport == UDP {
+		udp = 1
 	}
 	var buf [64]C.char
 	c.mu.Lock()
 	C.shim_classify(
-		(*C.uchar)(unsafe.Pointer(&payload[0])), C.int(len(payload)),
+		(*C.uchar)(unsafe.Pointer(&payload[0])), C.int(len(payload)), udp,
 		C.ushort(srcPort), C.ushort(dstPort),
 		&buf[0], C.int(len(buf)),
 	)

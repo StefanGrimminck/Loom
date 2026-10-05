@@ -10,4 +10,4 @@ func New() (Classifier, error) { return noop{}, nil }
 
 type noop struct{}
 
-func (noop) Classify(_ []byte, _, _ uint16) string { return "" }
+func (noop) Classify(_ []byte, _ Transport, _, _ uint16) string { return "" }

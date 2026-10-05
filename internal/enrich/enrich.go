@@ -176,7 +176,18 @@ func (e *Enricher) classifyEvent(event, source map[string]interface{}) string {
 	if dst, ok := event["destination"].(map[string]interface{}); ok {
 		dstPort = portOf(dst["port"])
 	}
-	return e.classifier.Classify(payload, srcPort, dstPort)
+	return e.classifier.Classify(payload, transportOf(event), srcPort, dstPort)
+}
+
+// transportOf reads network.transport; anything other than "udp" is TCP, which
+// is what every sensor sent before UDP capture existed.
+func transportOf(event map[string]interface{}) classify.Transport {
+	if n, ok := event["network"].(map[string]interface{}); ok {
+		if t, _ := n["transport"].(string); t == "udp" {
+			return classify.UDP
+		}
+	}
+	return classify.TCP
 }
 
 // portOf coerces a JSON-decoded port (float64, int, or json.Number) to uint16.

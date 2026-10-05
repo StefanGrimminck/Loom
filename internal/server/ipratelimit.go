@@ -74,8 +74,8 @@ func (l *ipRateLimiter) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// realClientIP returns the client IP from r.RemoteAddr, which chi's RealIP
-// middleware has already rewritten from X-Real-IP / X-Forwarded-For.
+// realClientIP returns the host part of r.RemoteAddr: the peer address, or the
+// proxy-supplied one when TrustProxyHeaders is set.
 func realClientIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

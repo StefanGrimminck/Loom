@@ -30,12 +30,19 @@ type Server struct {
 	IPRateLimit int
 	// MaxConnections caps concurrent TCP connections; 0 = unlimited.
 	MaxConnections int
+	// TrustProxyHeaders takes the client address from X-Forwarded-For and
+	// X-Real-IP. Enable only behind a proxy that sets them; otherwise any
+	// client can choose its own address for the per-IP limit.
+	TrustProxyHeaders bool
 }
 
 // Run starts the ingest server (HTTPS) and optionally management server (HTTP on separate port).
 func (s *Server) Run(ctx context.Context) error {
 	ingestRouter := chi.NewRouter()
-	ingestRouter.Use(middleware.RealIP, middleware.Recoverer, securityHeaders)
+	if s.TrustProxyHeaders {
+		ingestRouter.Use(middleware.RealIP)
+	}
+	ingestRouter.Use(middleware.Recoverer, securityHeaders)
 	if s.IPRateLimit > 0 {
 		ingestRouter.Use(newIPRateLimiter(s.IPRateLimit).Middleware)
 	}

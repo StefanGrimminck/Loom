@@ -10,8 +10,8 @@ import (
 type PerSensorLimiter struct {
 	mu       sync.Mutex
 	rps      int
-	lastTick map[string]int64   // sensor -> last second bucket
-	count    map[string]int      // sensor -> count in current second
+	lastTick map[string]int64 // sensor -> last second bucket
+	count    map[string]int   // sensor -> count in current second
 	nowFn    func() time.Time
 }
 

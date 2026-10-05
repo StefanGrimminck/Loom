@@ -11,12 +11,21 @@
 // working on machines that don't have libndpi installed.
 package classify
 
+// Transport is the L4 protocol the payload arrived on.
+type Transport uint8
+
+const (
+	TCP Transport = iota
+	UDP
+)
+
+// MaxPayload is the most payload handed to the classifier. Detection works on
+// the first bytes of a single packet; the rest only costs cgo copying.
+const MaxPayload = 2048
+
 // Classifier identifies the application protocol of a single captured payload.
-// A nil *Classifier is valid and always returns "" — callers can treat "no
-// classifier" and "unclassified" identically.
 type Classifier interface {
-	// Classify returns a lowercase protocol name (e.g. "bittorrent", "smbv1",
-	// "postgresql") or "" when the payload can't be identified. srcPort/dstPort
-	// are hints nDPI weighs alongside the payload signature.
-	Classify(payload []byte, srcPort, dstPort uint16) string
+	// Classify returns a lowercase protocol name (e.g. "bittorrent", "dns",
+	// "quic") or "" when the payload can't be identified.
+	Classify(payload []byte, transport Transport, srcPort, dstPort uint16) string
 }

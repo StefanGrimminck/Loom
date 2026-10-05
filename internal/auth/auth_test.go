@@ -12,9 +12,9 @@ func TestValidator_Validate(t *testing.T) {
 	v := NewValidator(tokenToSensor)
 
 	tests := []struct {
-		name     string
-		token    string
-		wantID   string
+		name   string
+		token  string
+		wantID string
 	}{
 		{"valid token 1", "secret-token-1", "sensor-a"},
 		{"valid token 2", "secret-token-2", "vps-frankfurt-01"},

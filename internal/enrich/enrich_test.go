@@ -3,6 +3,7 @@ package enrich
 import (
 	"testing"
 
+	"github.com/StefanGrimminck/Loom/internal/classify"
 	"github.com/rs/zerolog"
 )
 
@@ -16,11 +17,11 @@ func TestEnricher_NoDBs_PreservesEvent(t *testing.T) {
 
 	// Spip-style event with source.ip
 	ev := map[string]interface{}{
-		"@timestamp": "2026-02-15T19:47:09Z",
-		"event":      map[string]interface{}{"id": "abc", "ingested_by": "spip"},
-		"source":     map[string]interface{}{"ip": "8.8.8.8", "port": float64(12345)},
+		"@timestamp":  "2026-02-15T19:47:09Z",
+		"event":       map[string]interface{}{"id": "abc", "ingested_by": "spip"},
+		"source":      map[string]interface{}{"ip": "8.8.8.8", "port": float64(12345)},
 		"destination": map[string]interface{}{"ip": "10.0.0.1", "port": float64(443)},
-		"observer":   map[string]interface{}{"hostname": "sensor-a"},
+		"observer":    map[string]interface{}{"hostname": "sensor-a"},
 	}
 	e.EnrichEvent(ev)
 
@@ -96,5 +97,34 @@ func TestEnricher_Ready(t *testing.T) {
 	defer e.Close()
 	if !e.Ready() {
 		t.Error("Ready() should be true even with no DBs")
+	}
+}
+
+type recordingClassifier struct{ transport classify.Transport }
+
+func (r *recordingClassifier) Classify(_ []byte, t classify.Transport, _, _ uint16) string {
+	r.transport = t
+	return "dns"
+}
+
+func TestClassifierReceivesTransport(t *testing.T) {
+	for _, tc := range []struct {
+		transport string
+		want      classify.Transport
+	}{{"udp", classify.UDP}, {"tcp", classify.TCP}, {"", classify.TCP}} {
+		rc := &recordingClassifier{}
+		e := &Enricher{classifier: rc}
+		ev := map[string]interface{}{
+			"event":   map[string]interface{}{"original_payload_hex": "abcd0100"},
+			"source":  map[string]interface{}{"ip": "198.51.100.7", "port": float64(4000)},
+			"network": map[string]interface{}{"transport": tc.transport},
+		}
+		e.EnrichEvent(ev)
+		if rc.transport != tc.want {
+			t.Errorf("transport %q passed as %v", tc.transport, rc.transport)
+		}
+		if p, _ := ev["ndpi"].(map[string]interface{}); p["protocol"] != "dns" {
+			t.Errorf("label not written: %v", ev["ndpi"])
+		}
 	}
 }

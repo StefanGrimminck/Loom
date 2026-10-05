@@ -28,6 +28,9 @@ type ServerConfig struct {
 	ManagementListenAddress string `toml:"management_listen_address"`
 	// MaxConnections caps concurrent ingest TCP connections; 0 = unlimited.
 	MaxConnections int `toml:"max_connections"`
+	// TrustProxyHeaders honours X-Forwarded-For / X-Real-IP. Only for
+	// deployments behind a proxy that sets them.
+	TrustProxyHeaders bool `toml:"trust_proxy_headers"`
 }
 
 type AuthConfig struct {
@@ -36,11 +39,12 @@ type AuthConfig struct {
 }
 
 type LimitsConfig struct {
-	MaxBodySizeBytes   int64 `toml:"max_body_size_bytes"`
-	MaxEventsPerBatch  int   `toml:"max_events_per_batch"`
-	MaxEventSizeBytes  int64 `toml:"max_event_size_bytes"`
-	PerSensorRPS       int   `toml:"per_sensor_rps"`
-	PerSensorEventsRPS int   `toml:"per_sensor_events_rps"`
+	MaxBodySizeBytes  int64 `toml:"max_body_size_bytes"`
+	MaxEventsPerBatch int   `toml:"max_events_per_batch"`
+	MaxEventSizeBytes int64 `toml:"max_event_size_bytes"`
+	PerSensorRPS      int   `toml:"per_sensor_rps"`
+	// PerSensorEventsRPS caps events per second per sensor; 0 = unlimited.
+	PerSensorEventsRPS int `toml:"per_sensor_events_rps"`
 	// GlobalIPRPS is the per-IP request limit per second before auth. 0 = default
 	// (100 rps), -1 = disabled.
 	GlobalIPRPS int `toml:"global_ip_rps"`
